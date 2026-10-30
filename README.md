@@ -16,6 +16,7 @@ Avec `uv`, il n'y a pas besoin de `source venv/bin/activate` comme avec un `venv
 ## Lancement manuel
 
 ```bash
+cd /chemin/vers/dictee-qwen  # exécuter depuis la racine du dépôt cloné
 uv run python3 dictee_app.py config.toml
 ```
 
@@ -32,7 +33,7 @@ Les raccourcis clavier globaux (démarrer/arrêter l'enregistrement, pause, copi
      ```bash
      uv run --project /chemin/vers/dictee-qwen python3 /chemin/vers/dictee-qwen/dictee_app.py /chemin/vers/dictee-qwen/config.toml
      ```
-     L'option `--project` indique à `uv run` dans quel projet trouver l'environnement virtuel et le `uv.lock`, puisqu'une entrée de démarrage ne s'exécute pas forcément avec le dépôt comme répertoire de travail. Remplacer `/chemin/vers/dictee-qwen` par le chemin absolu réel du dépôt cloné.
+     L'option `--project` indique à `uv run` dans quel projet trouver l'environnement virtuel et le `uv.lock`, puisqu'une entrée de démarrage ne s'exécute pas forcément avec le dépôt comme répertoire de travail. **Remplacer les *trois* occurrences de `/chemin/vers/dictee-qwen` ci-dessus par le même chemin absolu réel du dépôt cloné** (après `--project`, dans le chemin du script, et dans le chemin de `config.toml`).
    - **Retard de démarrage** : quelques secondes (pour laisser le serveur X11 et la session graphique s'initialiser complètement).
 
 ## Checklist de tests manuels (non automatisés)
