@@ -14,6 +14,20 @@ def status_label(state: str) -> tuple[str, str]:
         raise ValueError(f"unknown state {state!r}") from None
 
 
+_BUTTON_LABELS = {
+    "idle": ("Démarrer", "Mettre en pause"),
+    "recording": ("Arrêter", "Mettre en pause"),
+    "paused": ("Arrêter", "Reprendre"),
+}
+
+
+def button_labels(state: str) -> tuple[str, str]:
+    try:
+        return _BUTTON_LABELS[state]
+    except KeyError:
+        raise ValueError(f"unknown state {state!r}") from None
+
+
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -49,13 +63,15 @@ class DictationWindow(Gtk.Window):
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         box.pack_start(button_box, False, False, 4)
 
-        record_button = Gtk.Button(label="Start/Stop")
-        record_button.connect("clicked", lambda _btn: self._on_toggle_record())
-        button_box.pack_start(record_button, True, True, 0)
+        initial_record_label, initial_pause_label = button_labels("idle")
 
-        pause_button = Gtk.Button(label="Pause/Reprendre")
-        pause_button.connect("clicked", lambda _btn: self._on_toggle_pause())
-        button_box.pack_start(pause_button, True, True, 0)
+        self._record_button = Gtk.Button(label=initial_record_label)
+        self._record_button.connect("clicked", lambda _btn: self._on_toggle_record())
+        button_box.pack_start(self._record_button, True, True, 0)
+
+        self._pause_button = Gtk.Button(label=initial_pause_label)
+        self._pause_button.connect("clicked", lambda _btn: self._on_toggle_pause())
+        button_box.pack_start(self._pause_button, True, True, 0)
 
         copy_button = Gtk.Button(label="Copier")
         copy_button.connect("clicked", lambda _btn: self._on_copy())
@@ -77,6 +93,9 @@ class DictationWindow(Gtk.Window):
     def _set_status_on_main_thread(self, state: str) -> bool:
         text, _color = status_label(state)
         self._status_label.set_text(text)
+        record_label, pause_label = button_labels(state)
+        self._record_button.set_label(record_label)
+        self._pause_button.set_label(pause_label)
         return False
 
     def clear_transcript(self) -> None:
