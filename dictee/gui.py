@@ -29,7 +29,6 @@ class DictationWindow(Gtk.Window):
         self._on_toggle_pause = on_toggle_pause
         self._on_copy = on_copy
 
-        self.set_keep_above(True)
         self.set_default_size(360, 240)
         self.set_resizable(True)
 
