@@ -25,7 +25,12 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 
 echo "== Creating Python virtual environment (with system site packages for PyGObject) =="
-uv venv --clear --system-site-packages
+# --no-managed-python forces uv to use the SYSTEM Python interpreter rather
+# than downloading its own build: --system-site-packages only exposes
+# python3-gi correctly when the venv's base interpreter IS the system one
+# (the one python3-gi was compiled against), not a different uv-managed
+# 3.12.x build.
+uv venv --clear --system-site-packages --no-managed-python
 
 echo "== Installing Python dependencies =="
 uv sync --dev
