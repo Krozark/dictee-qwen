@@ -1,3 +1,4 @@
+import logging
 import queue
 
 import numpy as np
@@ -74,3 +75,11 @@ def test_start_called_twice_stops_the_previous_stream():
     assert first_stream.closed is True
     assert second_stream is not first_stream
     assert second_stream.started is True
+
+
+def test_callback_logs_warning_on_nonzero_status(caplog):
+    capture = AudioCapture(queue.Queue(), stream_factory=FakeStream)
+    indata = np.array([[0.1]], dtype=np.float32)
+    with caplog.at_level(logging.WARNING):
+        capture._callback(indata, 1, None, status="input_overflow")
+    assert "input_overflow" in caplog.text
