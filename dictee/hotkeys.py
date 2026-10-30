@@ -40,12 +40,22 @@ class HotkeyListener:
         self._keycode_map: dict[tuple[int, int], Callable[[], None]] = {}
 
     def grab_all(self) -> None:
+        claimed_by: dict[tuple[int, int], str] = {}
         for shortcut, callback in self._bindings.items():
             modifiers, key = parse_shortcut(shortcut)
             keysym = XK.string_to_keysym(key)
             keycode = self._display.keysym_to_keycode(keysym)
-            self._root.grab_key(keycode, modifiers, True, X.GrabModeAsync, X.GrabModeAsync)
-            self._keycode_map[(keycode, modifiers)] = callback
+            for lock_bits in (0, X.LockMask, X.Mod2Mask, X.LockMask | X.Mod2Mask):
+                variant_modifiers = modifiers | lock_bits
+                map_key = (keycode, variant_modifiers)
+                if map_key in claimed_by and claimed_by[map_key] != shortcut:
+                    raise ValueError(
+                        f"Shortcut {shortcut!r} conflicts with {claimed_by[map_key]!r} "
+                        "(both resolve to the same key combination)"
+                    )
+                claimed_by[map_key] = shortcut
+                self._root.grab_key(keycode, variant_modifiers, True, X.GrabModeAsync, X.GrabModeAsync)
+                self._keycode_map[map_key] = callback
 
     def run(self) -> None:
         """Blocks, dispatching matching key-press events to their callback.

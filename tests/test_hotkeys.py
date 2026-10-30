@@ -56,9 +56,11 @@ def test_grab_all_grabs_each_configured_shortcut():
 
     listener.grab_all()
 
+    lock_variants = (0, X.LockMask, X.Mod2Mask, X.LockMask | X.Mod2Mask)
     expected = {
-        (XK.string_to_keysym("d"), X.Mod4Mask),
-        (XK.string_to_keysym("p"), X.Mod4Mask),
+        (XK.string_to_keysym("d"), X.Mod4Mask | lock_bits) for lock_bits in lock_variants
+    } | {
+        (XK.string_to_keysym("p"), X.Mod4Mask | lock_bits) for lock_bits in lock_variants
     }
     assert set(fake_display.root.grab_calls) == expected
 
@@ -76,3 +78,30 @@ def test_grab_all_registers_callbacks_by_keycode_and_modifiers():
     callback()
 
     assert calls == ["d"]
+
+
+def test_grab_all_grabs_lock_modifier_variants():
+    fake_display = FakeDisplay()
+    listener = HotkeyListener({"<Super>d": lambda: None}, display_factory=lambda: fake_display)
+    listener.grab_all()
+
+    keysym = XK.string_to_keysym("d")
+    expected = {
+        (keysym, X.Mod4Mask),
+        (keysym, X.Mod4Mask | X.LockMask),
+        (keysym, X.Mod4Mask | X.Mod2Mask),
+        (keysym, X.Mod4Mask | X.LockMask | X.Mod2Mask),
+    }
+    assert set(fake_display.root.grab_calls) == expected
+
+
+def test_grab_all_rejects_conflicting_shortcuts():
+    fake_display = FakeDisplay()
+    # Modifier order doesn't affect the resulting bitmask, so these two
+    # distinct shortcut strings both resolve to the same (keycode, modifiers).
+    listener = HotkeyListener(
+        {"<Ctrl><Alt>p": lambda: None, "<Alt><Ctrl>p": lambda: None},
+        display_factory=lambda: fake_display,
+    )
+    with pytest.raises(ValueError, match="conflicts"):
+        listener.grab_all()
