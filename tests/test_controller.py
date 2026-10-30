@@ -183,3 +183,60 @@ def test_process_frame_ignored_while_paused():
     controller.toggle_pause()
     controller.process_frame(np.zeros(10, dtype=np.float32))
     assert asr_backend.calls == []
+
+
+def test_process_frame_catches_asr_backend_exception_and_continues():
+    class RaisingAsrBackend:
+        def transcribe(self, audio, sample_rate):
+            raise RuntimeError("boom")
+
+    backup_writer = FakeBackupWriter()
+    gui = FakeGui()
+    controller = Controller(
+        vad_segmenter=FakeVadSegmenter([np.ones(10, dtype=np.float32)]),
+        vad_model=FakeVadModel(),
+        asr_backend=RaisingAsrBackend(),
+        backup_writer=backup_writer,
+        gui=gui,
+        get_active_window_id=lambda: "42",
+        get_window_name=lambda window_id: "Mozilla Firefox",
+        inject_text=lambda window_id, text: None,
+        set_clipboard=lambda text: None,
+        sample_rate=16000,
+    )
+    controller.toggle_record()
+    controller.process_frame(np.zeros(10, dtype=np.float32))  # must not raise
+
+    assert controller.state == "recording"
+    assert controller.transcript == ""
+    assert backup_writer.segments == []
+    assert gui.segments == []
+
+
+def test_process_frame_catches_injection_exception_and_continues():
+    segment_audio = np.ones(10, dtype=np.float32)
+    backup_writer = FakeBackupWriter()
+    gui = FakeGui()
+
+    def raising_inject_text(window_id, text):
+        raise RuntimeError("xdotool exploded")
+
+    controller = Controller(
+        vad_segmenter=FakeVadSegmenter([segment_audio]),
+        vad_model=FakeVadModel(),
+        asr_backend=FakeAsrBackend(text="bonjour"),
+        backup_writer=backup_writer,
+        gui=gui,
+        get_active_window_id=lambda: "42",
+        get_window_name=lambda window_id: "Mozilla Firefox",
+        inject_text=raising_inject_text,
+        set_clipboard=lambda text: None,
+        sample_rate=16000,
+    )
+    controller.toggle_record()
+    controller.process_frame(np.zeros(10, dtype=np.float32))  # must not raise
+
+    assert controller.state == "recording"
+    assert controller.transcript == "bonjour"
+    assert backup_writer.segments == ["bonjour"]
+    assert gui.segments == ["bonjour"]
