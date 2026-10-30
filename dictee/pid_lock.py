@@ -15,6 +15,8 @@ def _default_pid_is_alive(pid: int) -> bool:
     except ProcessLookupError:
         return False
     except PermissionError:
+        # Can't verify a PID we don't own — assume it's alive and block
+        # startup rather than risk two instances running at once.
         return True
     return True
 
@@ -26,8 +28,11 @@ class PidLock:
 
     def acquire(self) -> None:
         if self._path.exists():
-            existing_pid = int(self._path.read_text().strip())
-            if self._pid_is_alive(existing_pid):
+            try:
+                existing_pid = int(self._path.read_text().strip())
+            except ValueError:
+                existing_pid = None
+            if existing_pid is not None and self._pid_is_alive(existing_pid):
                 raise AlreadyRunningError(
                     f"dictee_app is already running with PID {existing_pid}"
                 )
