@@ -6,6 +6,7 @@ _PUNCTUATION_NO_SPACE_BEFORE = {",", ".", "!", "?", ";", ":", ")", "]", "}", "â€
 
 
 def join_segment(existing_text: str, new_segment: str) -> str:
+    existing_text = existing_text.strip()
     new_segment = new_segment.strip()
     if not new_segment:
         return existing_text

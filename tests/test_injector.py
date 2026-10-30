@@ -23,3 +23,11 @@ def test_should_inject_true_for_other_window():
 
 def test_should_inject_false_for_app_window():
     assert should_inject(APP_WINDOW_TITLE) is False
+
+
+def test_join_segment_normalizes_trailing_whitespace_in_existing_text():
+    assert join_segment("bonjour ", "le monde") == "bonjour le monde"
+
+
+def test_join_segment_treats_whitespace_only_existing_text_as_empty():
+    assert join_segment("   ", "bonjour") == "bonjour"
