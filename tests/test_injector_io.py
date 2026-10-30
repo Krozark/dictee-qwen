@@ -1,3 +1,5 @@
+import subprocess
+
 import pytest
 
 from dictee.injector import get_active_window_id, get_window_name, inject_text, set_clipboard
@@ -47,8 +49,6 @@ def test_inject_text_sets_clipboard_then_pastes_into_target_window():
 
 
 def test_inject_text_propagates_runner_failure():
-    import subprocess
-
     def failing_runner(args, **kwargs):
         raise subprocess.CalledProcessError(1, args)
 

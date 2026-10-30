@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Callable
 
 import numpy as np
+import torch
+from transformers import AutoModelForMultimodalLM, AutoProcessor
 
 from .base import AsrBackend
 
@@ -16,9 +18,6 @@ class AsrModelLoadError(RuntimeError):
 def default_loader(model_id: str):
     """Loads the real Qwen3-ASR model via transformers. Requires `torch` and
     a CUDA device; not exercised by unit tests (see README manual checklist)."""
-    import torch
-    from transformers import AutoModelForMultimodalLM, AutoProcessor
-
     processor = AutoProcessor.from_pretrained(model_id)
     model = (
         AutoModelForMultimodalLM.from_pretrained(model_id, dtype=torch.bfloat16)
@@ -51,7 +50,5 @@ class QwenBackend(AsrBackend):
         return text.strip()
 
     def close(self) -> None:
-        import torch
-
         del self._model
         torch.cuda.empty_cache()

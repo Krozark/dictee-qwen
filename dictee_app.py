@@ -12,6 +12,8 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib  # noqa: E402
 
+from dictee.asr_backends.qwen_backend import QwenBackend
+from dictee.asr_backends.whisper_backend import WhisperBackend
 from dictee.audio_capture import SAMPLE_RATE, AudioCapture
 from dictee.backup_writer import BackupWriter
 from dictee.config import load_config
@@ -25,19 +27,16 @@ from dictee.vad_segmenter import VadSegmenter
 
 PID_LOCK_PATH = "/tmp/dictee_app.pid"
 
+QWEN_MODEL_IDS = {
+    "qwen-1.7b": "Qwen/Qwen3-ASR-1.7B-hf",
+    "qwen-0.6b": "Qwen/Qwen3-ASR-0.6B-hf",
+}
+
 
 def build_asr_backend(config):
-    if config.backend == "qwen-1.7b":
-        from dictee.asr_backends.qwen_backend import QwenBackend
-
-        return QwenBackend("Qwen/Qwen3-ASR-1.7B-hf", language=config.language)
-    if config.backend == "qwen-0.6b":
-        from dictee.asr_backends.qwen_backend import QwenBackend
-
-        return QwenBackend("Qwen/Qwen3-ASR-0.6B-hf", language=config.language)
+    if config.backend in QWEN_MODEL_IDS:
+        return QwenBackend(QWEN_MODEL_IDS[config.backend], language=config.language)
     if config.backend == "whisper":
-        from dictee.asr_backends.whisper_backend import WhisperBackend
-
         return WhisperBackend(base_url="http://localhost:8080")
     raise ValueError(f"Unknown backend {config.backend!r}")
 

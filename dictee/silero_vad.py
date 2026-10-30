@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable
 
 import numpy as np
+import torch
 
 SPEECH_THRESHOLD = 0.5
 
@@ -24,8 +25,6 @@ def load_silero_vad(sample_rate: int = 16000) -> SileroVad:
     on first run (downloads and caches the model) and `torch`/`torchaudio`
     installed. Not covered by unit tests - exercised by the manual
     integration checklist in README.md."""
-    import torch
-
     model, _utils = torch.hub.load(
         repo_or_dir="snakers4/silero-vad", model="silero_vad", trust_repo=True
     )
