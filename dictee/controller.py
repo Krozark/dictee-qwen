@@ -31,6 +31,7 @@ class BackupWriterProtocol(Protocol):
 class GuiProtocol(Protocol):
     def set_status(self, state: str) -> None: ...
     def append_segment(self, text: str) -> None: ...
+    def clear_transcript(self) -> None: ...
 
 
 class Controller:
@@ -71,6 +72,7 @@ class Controller:
                 self._last_external_window_id = None
         if starting:
             self._backup_writer.start_session()
+            self._gui.clear_transcript()
         with self._lock:
             self.state = "recording" if starting else "idle"
             new_state = self.state

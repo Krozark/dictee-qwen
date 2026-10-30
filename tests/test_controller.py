@@ -47,12 +47,16 @@ class FakeGui:
     def __init__(self):
         self.statuses = []
         self.segments = []
+        self.clear_calls = 0
 
     def set_status(self, state):
         self.statuses.append(state)
 
     def append_segment(self, text):
         self.segments.append(text)
+
+    def clear_transcript(self):
+        self.clear_calls += 1
 
 
 def make_controller(vad_results=(), asr_text="bonjour", active_window_title="Mozilla Firefox"):
@@ -332,3 +336,16 @@ def test_process_frame_follows_focus_when_switching_between_two_external_windows
     controller.process_frame(np.zeros(10, dtype=np.float32))  # switched directly to gedit (77), never back to GUI
 
     assert inject_calls == [("42", "bonjour"), ("77", "bonjour")]
+
+
+def test_toggle_record_clears_gui_transcript_when_starting_a_new_session():
+    controller, backup_writer, gui, *_ = make_controller()
+    controller.toggle_record()
+    assert gui.clear_calls == 1
+
+
+def test_toggle_record_does_not_clear_gui_transcript_when_stopping():
+    controller, backup_writer, gui, *_ = make_controller()
+    controller.toggle_record()  # start
+    controller.toggle_record()  # stop
+    assert gui.clear_calls == 1  # only cleared once, on the start transition, not on stop
