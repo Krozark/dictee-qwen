@@ -11,6 +11,9 @@ from .base import AsrBackend
 
 HttpPost = Callable[..., "requests.Response"]
 
+CONNECT_TIMEOUT_SECONDS = 5
+READ_TIMEOUT_SECONDS = 30
+
 
 def encode_wav(audio: np.ndarray, sample_rate: int) -> bytes:
     pcm16 = np.clip(audio, -1.0, 1.0)
@@ -34,6 +37,7 @@ class WhisperBackend(AsrBackend):
         response = self._http_post(
             f"{self._base_url}/inference",
             files={"file": ("segment.wav", wav_bytes, "audio/wav")},
+            timeout=(CONNECT_TIMEOUT_SECONDS, READ_TIMEOUT_SECONDS),
         )
         response.raise_for_status()
         return response.json()["text"].strip()

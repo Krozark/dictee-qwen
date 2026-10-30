@@ -31,7 +31,7 @@ class FakeResponse:
 def test_whisper_backend_posts_wav_and_returns_stripped_text():
     calls = []
 
-    def fake_http_post(url, files):
+    def fake_http_post(url, files, **kwargs):
         calls.append((url, files))
         return FakeResponse({"text": " bonjour le monde "})
 
@@ -48,7 +48,7 @@ def test_whisper_backend_posts_wav_and_returns_stripped_text():
 def test_whisper_backend_strips_trailing_slash_from_base_url():
     captured_urls = []
 
-    def fake_http_post(url, files):
+    def fake_http_post(url, files, **kwargs):
         captured_urls.append(url)
         return FakeResponse({"text": "bonjour"})
 
@@ -56,3 +56,17 @@ def test_whisper_backend_strips_trailing_slash_from_base_url():
     backend.transcribe(np.zeros(1600, dtype=np.float32), sample_rate=16000)
 
     assert captured_urls == ["http://localhost:8080/inference"]
+
+
+def test_whisper_backend_passes_timeout_to_http_post():
+    captured_kwargs = {}
+
+    def fake_http_post(url, files, **kwargs):
+        captured_kwargs.update(kwargs)
+        return FakeResponse({"text": "bonjour"})
+
+    backend = WhisperBackend(base_url="http://localhost:8080", http_post=fake_http_post)
+    backend.transcribe(np.zeros(1600, dtype=np.float32), sample_rate=16000)
+
+    assert "timeout" in captured_kwargs
+    assert captured_kwargs["timeout"] == (5, 30)
