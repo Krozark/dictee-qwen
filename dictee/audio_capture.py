@@ -23,9 +23,12 @@ class AudioCapture:
         self._stream = None
 
     def _callback(self, indata, frames, time_info, status):
+        # TODO: surface status.input_overflow (dropped audio) once logging exists.
         self._frame_queue.put(indata[:, 0].copy())
 
     def start(self) -> None:
+        if self._stream is not None:
+            self.stop()
         self._stream = self._stream_factory(
             samplerate=SAMPLE_RATE,
             channels=1,

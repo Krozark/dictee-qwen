@@ -60,3 +60,17 @@ def test_stop_stops_and_closes_stream():
     assert stream.started is False
     assert stream.closed is True
     assert capture._stream is None
+
+
+def test_start_called_twice_stops_the_previous_stream():
+    capture = AudioCapture(queue.Queue(), stream_factory=FakeStream)
+    capture.start()
+    first_stream = capture._stream
+
+    capture.start()
+    second_stream = capture._stream
+
+    assert first_stream.started is False
+    assert first_stream.closed is True
+    assert second_stream is not first_stream
+    assert second_stream.started is True
