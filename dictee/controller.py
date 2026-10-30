@@ -45,7 +45,7 @@ class Controller:
         gui: GuiProtocol,
         get_active_window_id: Callable[[], str],
         get_window_name: Callable[[str], str],
-        inject_text: Callable[[str, str], None],
+        inject_text: Callable[[str], None],
         set_clipboard: Callable[[str], None],
         sample_rate: int,
     ):
@@ -62,14 +62,12 @@ class Controller:
         self._lock = threading.Lock()
         self.state = "idle"
         self.transcript = ""
-        self._last_external_window_id: str | None = None
 
     def toggle_record(self) -> None:
         with self._lock:
             starting = self.state == "idle"
             if starting:
                 self.transcript = ""
-                self._last_external_window_id = None
         if starting:
             self._backup_writer.start_session()
             self._gui.clear_transcript()
@@ -119,11 +117,7 @@ class Controller:
         try:
             window_id = self._get_active_window_id()
             window_name = self._get_window_name(window_id)
-            with self._lock:
-                if should_inject(window_name):
-                    self._last_external_window_id = window_id
-                target_window_id = self._last_external_window_id
-            if target_window_id is not None:
-                self._inject_text(target_window_id, text)
+            if should_inject(window_name):
+                self._inject_text(text)
         except Exception:
             logger.exception("Failed to inject transcribed text into the active window")

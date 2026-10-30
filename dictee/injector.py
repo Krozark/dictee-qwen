@@ -1,19 +1,9 @@
 from __future__ import annotations
 
 import subprocess
-import time
 from typing import Callable
 
 APP_WINDOW_TITLE = "DicteeQwenOverlay"
-
-# xdotool's `windowactivate --sync` only waits for the window manager to report
-# the activation as complete (e.g. the _NET_ACTIVE_WINDOW property changing). It
-# does NOT guarantee the target application has finished processing the
-# focus-in event and is ready to receive a paste keystroke. These settle delays
-# bridge that race window; tune them here if a particular WM/app combo still
-# drops or truncates pastes.
-ACTIVATE_SETTLE_SECONDS = 0.15
-PASTE_SETTLE_SECONDS = 0.1
 
 _PUNCTUATION_NO_SPACE_BEFORE = {",", ".", "!", "?", ";", ":", ")", "]", "}", "…"}
 
@@ -51,19 +41,6 @@ def set_clipboard(text: str, runner: Runner = subprocess.run) -> None:
     runner(["xclip", "-selection", "clipboard"], input=text, check=True, text=True)
 
 
-def inject_text(
-    window_id: str,
-    text: str,
-    runner: Runner = subprocess.run,
-    sleep: Callable[[float], None] = time.sleep,
-) -> None:
+def inject_text(text: str, runner: Runner = subprocess.run) -> None:
     set_clipboard(text, runner=runner)
-    previous_window_id = get_active_window_id(runner=runner)
-    needs_focus_switch = previous_window_id != window_id
-    if needs_focus_switch:
-        runner(["xdotool", "windowactivate", "--sync", window_id], check=True)
-        sleep(ACTIVATE_SETTLE_SECONDS)
     runner(["xdotool", "key", "ctrl+v"], check=True)
-    if needs_focus_switch:
-        sleep(PASTE_SETTLE_SECONDS)
-        runner(["xdotool", "windowactivate", "--sync", previous_window_id], check=True)

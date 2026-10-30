@@ -20,14 +20,6 @@ class FakeRunner:
         return FakeResult(stdout=self._stdout_by_args.get(tuple(args), ""))
 
 
-class FakeSleep:
-    def __init__(self):
-        self.calls = []
-
-    def __call__(self, seconds):
-        self.calls.append(seconds)
-
-
 def test_get_active_window_id_parses_stdout():
     runner = FakeRunner({("xdotool", "getactivewindow"): "12345\n"})
     assert get_active_window_id(runner=runner) == "12345"
@@ -47,32 +39,13 @@ def test_set_clipboard_pipes_text_to_xclip():
     ]
 
 
-def test_inject_text_pastes_directly_when_target_already_active():
-    runner = FakeRunner({("xdotool", "getactivewindow"): "12345\n"})
-    sleep = FakeSleep()
-    inject_text("12345", "bonjour", runner=runner, sleep=sleep)
+def test_inject_text_sets_clipboard_then_pastes():
+    runner = FakeRunner()
+    inject_text("bonjour", runner=runner)
     assert runner.calls == [
         (["xclip", "-selection", "clipboard"], {"input": "bonjour", "check": True, "text": True}),
-        (["xdotool", "getactivewindow"], {"capture_output": True, "check": True, "text": True}),
         (["xdotool", "key", "ctrl+v"], {"check": True}),
     ]
-    # No focus switch happened, so there is no activation/paste settle dance to delay.
-    assert sleep.calls == []
-
-
-def test_inject_text_activates_target_then_restores_previous_window():
-    runner = FakeRunner({("xdotool", "getactivewindow"): "99999\n"})
-    sleep = FakeSleep()
-    inject_text("12345", "bonjour", runner=runner, sleep=sleep)
-    assert runner.calls == [
-        (["xclip", "-selection", "clipboard"], {"input": "bonjour", "check": True, "text": True}),
-        (["xdotool", "getactivewindow"], {"capture_output": True, "check": True, "text": True}),
-        (["xdotool", "windowactivate", "--sync", "12345"], {"check": True}),
-        (["xdotool", "key", "ctrl+v"], {"check": True}),
-        (["xdotool", "windowactivate", "--sync", "99999"], {"check": True}),
-    ]
-    # One settle delay after activating the target, one after pasting and before restoring.
-    assert len(sleep.calls) == 2
 
 
 def test_inject_text_propagates_runner_failure():
@@ -80,18 +53,4 @@ def test_inject_text_propagates_runner_failure():
         raise subprocess.CalledProcessError(1, args)
 
     with pytest.raises(subprocess.CalledProcessError):
-        inject_text("12345", "bonjour", runner=failing_runner)
-
-
-def test_inject_text_propagates_failure_from_windowactivate():
-    def failing_runner(args, **kwargs):
-        if args[0] == "xdotool" and args[1] == "windowactivate":
-            raise subprocess.CalledProcessError(1, args)
-        return FakeResult(stdout="99999\n")  # a window id different from the target "12345",
-        # so inject_text's focus-switch path (which calls windowactivate) is actually reached
-
-    sleep = FakeSleep()
-    with pytest.raises(subprocess.CalledProcessError):
-        inject_text("12345", "bonjour", runner=failing_runner, sleep=sleep)
-    # windowactivate raises before the post-activate sleep is ever reached.
-    assert sleep.calls == []
+        inject_text("bonjour", runner=failing_runner)
