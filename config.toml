@@ -1,0 +1,19 @@
+# config.toml — dictee-qwen default configuration
+
+# One of: "qwen-1.7b", "qwen-0.6b", "whisper"
+backend = "qwen-1.7b"
+
+language = "fr"
+
+# Global keyboard shortcuts (captured in X11, work even when the window
+# is minimized). Modifiers: <Super> <Ctrl> <Alt> <Shift>, stackable.
+hotkey_toggle_record = "<Super>d"
+hotkey_toggle_pause = "<Super>p"
+hotkey_copy = "<Super>c"
+
+# Voice activity detection tuning (milliseconds)
+vad_silence_ms = 500
+vad_min_segment_ms = 300
+vad_max_segment_ms = 15000
+
+backup_file = "/tmp/dictation_live.txt"
