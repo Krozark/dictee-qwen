@@ -7,6 +7,9 @@ language = "fr"
 
 # Global keyboard shortcuts (captured in X11, work even when the window
 # is minimized). Modifiers: <Super> <Ctrl> <Alt> <Shift>, stackable.
+# Note: <Super>d is "Show desktop" on some desktop environments (Cinnamon,
+# MATE/XFCE, some KDE Plasma versions). If recording doesn't toggle, your
+# desktop environment may already use this shortcut — change it below.
 hotkey_toggle_record = "<Super>d"
 hotkey_toggle_pause = "<Super>p"
 hotkey_copy = "<Super>c"
@@ -16,4 +19,7 @@ vad_silence_ms = 500
 vad_min_segment_ms = 300
 vad_max_segment_ms = 15000
 
+# Note: /tmp is typically world-readable on multi-user systems and may be
+# cleared on reboot (tmpfs). For privacy/durability, consider a path under
+# $HOME instead, e.g. "/home/youruser/.cache/dictee_live.txt".
 backup_file = "/tmp/dictation_live.txt"
