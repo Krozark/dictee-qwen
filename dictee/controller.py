@@ -117,9 +117,11 @@ class Controller:
         try:
             window_id = self._get_active_window_id()
             window_name = self._get_window_name(window_id)
-            if should_inject(window_name):
-                self._last_external_window_id = window_id
-            if self._last_external_window_id is not None:
-                self._inject_text(self._last_external_window_id, text)
+            with self._lock:
+                if should_inject(window_name):
+                    self._last_external_window_id = window_id
+                target_window_id = self._last_external_window_id
+            if target_window_id is not None:
+                self._inject_text(target_window_id, text)
         except Exception:
             logger.exception("Failed to inject transcribed text into the active window")

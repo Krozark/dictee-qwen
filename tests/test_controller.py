@@ -302,3 +302,33 @@ def test_toggle_record_resets_last_external_window_memory_between_sessions():
     controller.process_frame(np.zeros(10, dtype=np.float32))
 
     assert inject_calls == [("42", "bonjour")]  # second segment must NOT inject (memory was reset)
+
+
+def test_process_frame_follows_focus_when_switching_between_two_external_windows():
+    segment_audio = np.ones(10, dtype=np.float32)
+    backup_writer = FakeBackupWriter()
+    gui = FakeGui()
+    inject_calls = []
+    focus = {"window_id": "42", "window_name": "Mozilla Firefox"}
+
+    controller = Controller(
+        vad_segmenter=FakeVadSegmenter([segment_audio, segment_audio]),
+        vad_model=FakeVadModel(),
+        asr_backend=FakeAsrBackend(text="bonjour"),
+        backup_writer=backup_writer,
+        gui=gui,
+        get_active_window_id=lambda: focus["window_id"],
+        get_window_name=lambda window_id: focus["window_name"],
+        inject_text=lambda window_id, text: inject_calls.append((window_id, text)),
+        set_clipboard=lambda text: None,
+        sample_rate=16000,
+    )
+    controller.toggle_record()
+
+    controller.process_frame(np.zeros(10, dtype=np.float32))  # Firefox (42) focused
+
+    focus["window_id"] = "77"
+    focus["window_name"] = "gedit"
+    controller.process_frame(np.zeros(10, dtype=np.float32))  # switched directly to gedit (77), never back to GUI
+
+    assert inject_calls == [("42", "bonjour"), ("77", "bonjour")]
