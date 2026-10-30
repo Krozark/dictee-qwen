@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 
@@ -14,3 +15,5 @@ class BackupWriter:
         with self._path.open("a") as f:
             f.write(text)
             f.write(" ")
+            f.flush()
+            os.fsync(f.fileno())
