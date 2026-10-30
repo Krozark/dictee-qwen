@@ -10,7 +10,7 @@ language = "fr"
 # Note: <Super>d is "Show desktop" on some desktop environments (Cinnamon,
 # MATE/XFCE, some KDE Plasma versions). If recording doesn't toggle, your
 # desktop environment may already use this shortcut — change it below.
-hotkey_toggle_record = "<Super>d"
+hotkey_toggle_record = "<Super>r"
 hotkey_toggle_pause = "<Super>p"
 hotkey_copy = "<Super>c"
 
