@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, fields, replace
 from pathlib import Path
 
 try:
@@ -46,6 +46,10 @@ def load_config(path: str | None) -> Config:
         return config
     with file_path.open("rb") as f:
         data = tomllib.load(f)
+    valid_fields = {f.name for f in fields(Config)}
+    unknown_keys = set(data) - valid_fields
+    if unknown_keys:
+        raise ValueError(f"Unknown config key(s) {sorted(unknown_keys)} in {path}")
     config = replace(config, **data)
     validate_config(config)
     return config

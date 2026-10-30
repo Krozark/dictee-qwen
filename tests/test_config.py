@@ -42,3 +42,10 @@ def test_load_config_rejects_max_segment_not_greater_than_min(tmp_path):
     toml_path.write_text("vad_min_segment_ms = 500\nvad_max_segment_ms = 500\n")
     with pytest.raises(ValueError, match="vad_max_segment_ms"):
         load_config(str(toml_path))
+
+
+def test_load_config_rejects_unknown_key(tmp_path):
+    toml_path = tmp_path / "config.toml"
+    toml_path.write_text('backend_ = "whisper"\n')
+    with pytest.raises(ValueError, match="backend_"):
+        load_config(str(toml_path))
