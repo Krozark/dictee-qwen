@@ -1,3 +1,5 @@
+import pytest
+
 from dictee.injector import get_active_window_id, get_window_name, inject_text, set_clipboard
 
 
@@ -42,3 +44,13 @@ def test_inject_text_sets_clipboard_then_pastes_into_target_window():
         (["xclip", "-selection", "clipboard"], {"input": "bonjour", "check": True, "text": True}),
         (["xdotool", "key", "--window", "12345", "ctrl+v"], {"check": True}),
     ]
+
+
+def test_inject_text_propagates_runner_failure():
+    import subprocess
+
+    def failing_runner(args, **kwargs):
+        raise subprocess.CalledProcessError(1, args)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        inject_text("12345", "bonjour", runner=failing_runner)
