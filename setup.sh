@@ -25,7 +25,7 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 
 echo "== Creating Python virtual environment (with system site packages for PyGObject) =="
-uv venv --system-site-packages
+uv venv --clear --system-site-packages
 
 echo "== Installing Python dependencies =="
 uv sync --dev
@@ -36,7 +36,7 @@ uv run python3 -c "import gi; print('PyGObject OK')"
 echo "== Verifying CUDA availability =="
 uv run python3 -c "import torch; print('CUDA available:', torch.cuda.is_available())"
 
-read -rp "Build whisper.cpp with CUDA support as a fallback backend? [y/N] " build_whisper
+read -rp "Build whisper.cpp with CUDA support as a fallback backend? [y/N] " build_whisper || build_whisper=N
 if [[ "${build_whisper:-N}" =~ ^[Yy]$ ]]; then
     echo "== Cloning and building whisper.cpp with CUDA =="
     git clone https://github.com/ggerganov/whisper.cpp.git vendor/whisper.cpp
