@@ -35,8 +35,11 @@ def test_finalizes_segment_after_silence_threshold():
 def test_discards_segment_shorter_than_min_duration():
     seg = make_segmenter()
     seg.feed_frame(frame(), is_speech=True)  # 20ms of speech, below the 40ms minimum
-    for _ in range(4):
-        result = seg.feed_frame(frame(0.0), is_speech=False)
+    assert seg.feed_frame(frame(0.0), is_speech=False) is None  # 20ms silence
+    assert seg.feed_frame(frame(0.0), is_speech=False) is None  # 40ms silence
+    assert seg.feed_frame(frame(0.0), is_speech=False) is None  # 60ms silence
+    assert seg.feed_frame(frame(0.0), is_speech=False) is None  # 80ms silence
+    result = seg.feed_frame(frame(0.0), is_speech=False)  # 100ms silence: finalize, but discard (too short)
     assert result is None
 
 
