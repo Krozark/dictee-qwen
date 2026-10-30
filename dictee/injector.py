@@ -43,4 +43,10 @@ def set_clipboard(text: str, runner: Runner = subprocess.run) -> None:
 
 def inject_text(window_id: str, text: str, runner: Runner = subprocess.run) -> None:
     set_clipboard(text, runner=runner)
-    runner(["xdotool", "key", "--window", window_id, "ctrl+v"], check=True)
+    previous_window_id = get_active_window_id(runner=runner)
+    needs_focus_switch = previous_window_id != window_id
+    if needs_focus_switch:
+        runner(["xdotool", "windowactivate", "--sync", window_id], check=True)
+    runner(["xdotool", "key", "ctrl+v"], check=True)
+    if needs_focus_switch:
+        runner(["xdotool", "windowactivate", "--sync", previous_window_id], check=True)

@@ -39,12 +39,25 @@ def test_set_clipboard_pipes_text_to_xclip():
     ]
 
 
-def test_inject_text_sets_clipboard_then_pastes_into_target_window():
-    runner = FakeRunner()
+def test_inject_text_pastes_directly_when_target_already_active():
+    runner = FakeRunner({("xdotool", "getactivewindow"): "12345\n"})
     inject_text("12345", "bonjour", runner=runner)
     assert runner.calls == [
         (["xclip", "-selection", "clipboard"], {"input": "bonjour", "check": True, "text": True}),
-        (["xdotool", "key", "--window", "12345", "ctrl+v"], {"check": True}),
+        (["xdotool", "getactivewindow"], {"capture_output": True, "check": True, "text": True}),
+        (["xdotool", "key", "ctrl+v"], {"check": True}),
+    ]
+
+
+def test_inject_text_activates_target_then_restores_previous_window():
+    runner = FakeRunner({("xdotool", "getactivewindow"): "99999\n"})
+    inject_text("12345", "bonjour", runner=runner)
+    assert runner.calls == [
+        (["xclip", "-selection", "clipboard"], {"input": "bonjour", "check": True, "text": True}),
+        (["xdotool", "getactivewindow"], {"capture_output": True, "check": True, "text": True}),
+        (["xdotool", "windowactivate", "--sync", "12345"], {"check": True}),
+        (["xdotool", "key", "ctrl+v"], {"check": True}),
+        (["xdotool", "windowactivate", "--sync", "99999"], {"check": True}),
     ]
 
 
