@@ -67,3 +67,14 @@ def test_inject_text_propagates_runner_failure():
 
     with pytest.raises(subprocess.CalledProcessError):
         inject_text("12345", "bonjour", runner=failing_runner)
+
+
+def test_inject_text_propagates_failure_from_windowactivate():
+    def failing_runner(args, **kwargs):
+        if args[0] == "xdotool" and args[1] == "windowactivate":
+            raise subprocess.CalledProcessError(1, args)
+        return FakeResult(stdout="99999\n")  # a window id different from the target "12345",
+        # so inject_text's focus-switch path (which calls windowactivate) is actually reached
+
+    with pytest.raises(subprocess.CalledProcessError):
+        inject_text("12345", "bonjour", runner=failing_runner)
