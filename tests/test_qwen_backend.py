@@ -67,3 +67,18 @@ def test_transcribe_forces_configured_language_and_returns_decoded_text():
     assert fake_processor.apply_calls == [{"audio": audio, "language": "fr"}]
     assert fake_processor.decode_calls[0]["return_format"] == "transcription_only"
     assert len(fake_model.generate_calls) == 1
+
+
+def test_close_deletes_model_reference():
+    fake_model = FakeModel()
+    fake_processor = FakeProcessor()
+
+    def loader(model_id):
+        return fake_model, fake_processor
+
+    backend = QwenBackend("Qwen/Qwen3-ASR-1.7B-hf", loader=loader)
+    backend.close()
+
+    assert not hasattr(backend, "_model")
+    with pytest.raises(AttributeError):
+        backend.transcribe(np.zeros(1600, dtype=np.float32), sample_rate=16000)
