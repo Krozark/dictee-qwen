@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Dictée vocale locale (français) pour Linux Mint, avec Qwen3-ASR et injection système."
 requires-python = ">=3.9"
 dependencies = [
-    "numpy",
+    # Pinned below 2.0: the system-site-packages scipy (pulled in by
+    # --system-site-packages for PyGObject) is built against the NumPy 1.x
+    # API (e.g. the removed `numpy.Inf` alias) and breaks on NumPy 2.x.
+    "numpy<2",
     "sounddevice",
     "requests",
     "python-xlib",
@@ -26,10 +29,10 @@ dev = [
 ]
 
 [tool.uv.sources]
-torch = [{ index = "pytorch-cu121" }]
-torchaudio = [{ index = "pytorch-cu121" }]
+torch = [{ index = "pytorch-cu126" }]
+torchaudio = [{ index = "pytorch-cu126" }]
 
 [[tool.uv.index]]
-name = "pytorch-cu121"
-url = "https://download.pytorch.org/whl/cu121"
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
 explicit = true
