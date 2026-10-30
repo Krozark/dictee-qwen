@@ -64,16 +64,14 @@ class Controller:
 
     def toggle_record(self) -> None:
         with self._lock:
-            if self.state == "idle":
+            starting = self.state == "idle"
+            if starting:
                 self.transcript = ""
-                self.state = "recording"
-                should_start_session = True
-            else:
-                self.state = "idle"
-                should_start_session = False
-            new_state = self.state
-        if should_start_session:
+        if starting:
             self._backup_writer.start_session()
+        with self._lock:
+            self.state = "recording" if starting else "idle"
+            new_state = self.state
         self._gui.set_status(new_state)
 
     def toggle_pause(self) -> None:
