@@ -240,3 +240,65 @@ def test_process_frame_catches_injection_exception_and_continues():
     assert controller.transcript == "bonjour"
     assert backup_writer.segments == ["bonjour"]
     assert gui.segments == ["bonjour"]
+
+
+def test_process_frame_keeps_injecting_into_last_known_external_window_once_gui_gains_focus():
+    segment_audio = np.ones(10, dtype=np.float32)
+    backup_writer = FakeBackupWriter()
+    gui = FakeGui()
+    inject_calls = []
+    focus = {"window_id": "42", "window_name": "Mozilla Firefox"}
+
+    controller = Controller(
+        vad_segmenter=FakeVadSegmenter([segment_audio, segment_audio]),
+        vad_model=FakeVadModel(),
+        asr_backend=FakeAsrBackend(text="bonjour"),
+        backup_writer=backup_writer,
+        gui=gui,
+        get_active_window_id=lambda: focus["window_id"],
+        get_window_name=lambda window_id: focus["window_name"],
+        inject_text=lambda window_id, text: inject_calls.append((window_id, text)),
+        set_clipboard=lambda text: None,
+        sample_rate=16000,
+    )
+    controller.toggle_record()
+
+    controller.process_frame(np.zeros(10, dtype=np.float32))  # Firefox focused
+
+    focus["window_id"] = "99"
+    focus["window_name"] = APP_WINDOW_TITLE
+    controller.process_frame(np.zeros(10, dtype=np.float32))  # GUI now focused
+
+    assert inject_calls == [("42", "bonjour"), ("42", "bonjour")]
+
+
+def test_toggle_record_resets_last_external_window_memory_between_sessions():
+    segment_audio = np.ones(10, dtype=np.float32)
+    backup_writer = FakeBackupWriter()
+    gui = FakeGui()
+    inject_calls = []
+    focus = {"window_id": "42", "window_name": "Mozilla Firefox"}
+
+    controller = Controller(
+        vad_segmenter=FakeVadSegmenter([segment_audio, segment_audio]),
+        vad_model=FakeVadModel(),
+        asr_backend=FakeAsrBackend(text="bonjour"),
+        backup_writer=backup_writer,
+        gui=gui,
+        get_active_window_id=lambda: focus["window_id"],
+        get_window_name=lambda window_id: focus["window_name"],
+        inject_text=lambda window_id, text: inject_calls.append((window_id, text)),
+        set_clipboard=lambda text: None,
+        sample_rate=16000,
+    )
+    controller.toggle_record()
+    controller.process_frame(np.zeros(10, dtype=np.float32))  # Firefox focused, remembers "42"
+
+    controller.toggle_record()  # stop session 1
+    controller.toggle_record()  # start session 2
+
+    focus["window_id"] = "99"
+    focus["window_name"] = APP_WINDOW_TITLE  # GUI focused, nothing external seen yet this session
+    controller.process_frame(np.zeros(10, dtype=np.float32))
+
+    assert inject_calls == [("42", "bonjour")]  # second segment must NOT inject (memory was reset)

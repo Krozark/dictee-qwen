@@ -61,12 +61,14 @@ class Controller:
         self._lock = threading.Lock()
         self.state = "idle"
         self.transcript = ""
+        self._last_external_window_id: str | None = None
 
     def toggle_record(self) -> None:
         with self._lock:
             starting = self.state == "idle"
             if starting:
                 self.transcript = ""
+                self._last_external_window_id = None
         if starting:
             self._backup_writer.start_session()
         with self._lock:
@@ -116,6 +118,8 @@ class Controller:
             window_id = self._get_active_window_id()
             window_name = self._get_window_name(window_id)
             if should_inject(window_name):
-                self._inject_text(window_id, text)
+                self._last_external_window_id = window_id
+            if self._last_external_window_id is not None:
+                self._inject_text(self._last_external_window_id, text)
         except Exception:
             logger.exception("Failed to inject transcribed text into the active window")
