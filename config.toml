@@ -15,7 +15,7 @@ hotkey_toggle_pause = "<Super>p"
 hotkey_copy = "<Super>c"
 
 # Voice activity detection tuning (milliseconds)
-vad_silence_ms = 500
+vad_silence_ms = 300
 vad_min_segment_ms = 300
 vad_max_segment_ms = 15000
 
