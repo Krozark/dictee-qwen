@@ -77,7 +77,12 @@ class DictationWindow(Gtk.Window):
         copy_button.connect("clicked", lambda _btn: self._on_copy())
         button_box.pack_start(copy_button, True, True, 0)
 
+        self.connect("delete-event", self._on_delete_event)
         self.connect("destroy", lambda _win: Gtk.main_quit())
+
+    def _on_delete_event(self, _window, _event) -> bool:
+        self.hide()
+        return True
 
     def append_segment(self, text: str) -> None:
         GLib.idle_add(self._append_segment_on_main_thread, text)
