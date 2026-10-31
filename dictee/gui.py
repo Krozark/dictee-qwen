@@ -109,3 +109,64 @@ class DictationWindow(Gtk.Window):
     def _clear_transcript_on_main_thread(self) -> bool:
         self._text_view.get_buffer().set_text("")
         return False
+
+
+class TrayIcon:
+    def __init__(
+        self,
+        *,
+        get_state,
+        on_toggle_record,
+        on_toggle_pause,
+        on_copy,
+        on_show_window,
+        on_quit,
+    ):
+        self._get_state = get_state
+        self._on_toggle_record = on_toggle_record
+        self._on_toggle_pause = on_toggle_pause
+        self._on_copy = on_copy
+        self._on_show_window = on_show_window
+        self._on_quit = on_quit
+
+        self._status_icon = Gtk.StatusIcon()
+        self._status_icon.set_from_icon_name("audio-input-microphone")
+        self._status_icon.set_tooltip_text(APP_WINDOW_TITLE)
+        self._status_icon.connect("activate", self._on_activate)
+        self._status_icon.connect("popup-menu", self._on_popup_menu)
+
+    def _on_activate(self, _status_icon) -> None:
+        self._on_show_window()
+
+    def _on_popup_menu(self, _status_icon, button, activate_time) -> None:
+        menu = self._build_menu()
+        menu.popup(None, None, Gtk.StatusIcon.position_menu, self._status_icon, button, activate_time)
+
+    def _build_menu(self) -> Gtk.Menu:
+        record_label, pause_label = button_labels(self._get_state())
+        menu = Gtk.Menu()
+
+        record_item = Gtk.MenuItem(label=record_label)
+        record_item.connect("activate", lambda _item: self._on_toggle_record())
+        menu.append(record_item)
+
+        pause_item = Gtk.MenuItem(label=pause_label)
+        pause_item.connect("activate", lambda _item: self._on_toggle_pause())
+        menu.append(pause_item)
+
+        copy_item = Gtk.MenuItem(label="Copier")
+        copy_item.connect("activate", lambda _item: self._on_copy())
+        menu.append(copy_item)
+
+        menu.append(Gtk.SeparatorMenuItem())
+
+        show_item = Gtk.MenuItem(label="Afficher la fenêtre")
+        show_item.connect("activate", lambda _item: self._on_show_window())
+        menu.append(show_item)
+
+        quit_item = Gtk.MenuItem(label="Quitter")
+        quit_item.connect("activate", lambda _item: self._on_quit())
+        menu.append(quit_item)
+
+        menu.show_all()
+        return menu
