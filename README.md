@@ -48,3 +48,7 @@ Les raccourcis clavier globaux (démarrer/arrêter l'enregistrement, pause, copi
 - [ ] Débrancher le micro en cours de dictée : pas de plantage.
 - [ ] Arrêter l'app (Ctrl+C ou fermeture de la fenêtre) : `/tmp/dictee_app.pid` est supprimé, `nvidia-smi` ne montre plus le processus en mémoire GPU.
 - [ ] Relancer l'app juste après l'avoir arrêtée : pas de message « already running » bloquant à tort.
+- [ ] Fermer la fenêtre (bouton X) : elle disparaît mais l'app continue de tourner (vérifier via `ps aux | grep dictee_app` ou `nvidia-smi` que le processus est toujours actif).
+- [ ] Clic gauche sur l'icône du plateau système : la fenêtre réapparaît et revient au premier plan.
+- [ ] Clic droit sur l'icône du plateau système : le menu affiche les bons libellés selon l'état courant (« Démarrer »/« Arrêter », « Mettre en pause »/« Reprendre » selon que l'app est idle/en enregistrement/en pause).
+- [ ] « Quitter » depuis le menu du plateau système : l'app s'arrête proprement (`/tmp/dictee_app.pid` supprimé, plus de processus dans `nvidia-smi`).
