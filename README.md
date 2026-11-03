@@ -46,7 +46,7 @@ Les raccourcis clavier globaux (démarrer/arrêter l'enregistrement, pause, copi
 - [ ] Bouton « Copier » : le transcript complet se retrouve dans le presse-papiers (`xclip -o -selection clipboard`).
 - [ ] Dictée longue (10-15 minutes) : aucune perte de données (comparer avec `/tmp/dictation_live.txt`).
 - [ ] Débrancher le micro en cours de dictée : pas de plantage.
-- [ ] Arrêter l'app (Ctrl+C ou fermeture de la fenêtre) : `/tmp/dictee_app.pid` est supprimé, `nvidia-smi` ne montre plus le processus en mémoire GPU.
+- [ ] Arrêter l'app (Ctrl+C) : `/tmp/dictee_app.pid` est supprimé, `nvidia-smi` ne montre plus le processus en mémoire GPU.
 - [ ] Relancer l'app juste après l'avoir arrêtée : pas de message « already running » bloquant à tort.
 - [ ] Fermer la fenêtre (bouton X) : elle disparaît mais l'app continue de tourner (vérifier via `ps aux | grep dictee_app` ou `nvidia-smi` que le processus est toujours actif).
 - [ ] Clic gauche sur l'icône du plateau système : la fenêtre réapparaît et revient au premier plan.

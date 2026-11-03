@@ -117,28 +117,28 @@ def main() -> int:
         hotkeys.grab_all()
         hotkey_thread = threading.Thread(target=hotkeys.run, daemon=True)
         hotkey_thread.start()
+
+        def shutdown(*_args):
+            audio_capture.stop()
+            asr_backend.close()
+            if config.backend == "whisper":
+                pass  # whisper-server lifecycle is managed outside this process for now
+            lock.release()
+            Gtk.main_quit()
+            return False
+
+        tray_icon = TrayIcon(
+            get_state=lambda: controller.state,
+            on_toggle_record=lambda: controller.toggle_record() or audio_toggle(),
+            on_toggle_pause=lambda: controller.toggle_pause() or audio_pause_toggle(),
+            on_copy=lambda: controller.copy(),
+            on_show_window=window.present,
+            on_quit=shutdown,
+        )
     except Exception as exc:
         lock.release()
         print(f"Failed to start dictee: {exc}", file=sys.stderr)
         return 1
-
-    def shutdown(*_args):
-        audio_capture.stop()
-        asr_backend.close()
-        if config.backend == "whisper":
-            pass  # whisper-server lifecycle is managed outside this process for now
-        lock.release()
-        Gtk.main_quit()
-        return False
-
-    tray_icon = TrayIcon(
-        get_state=lambda: controller.state,
-        on_toggle_record=lambda: controller.toggle_record() or audio_toggle(),
-        on_toggle_pause=lambda: controller.toggle_pause() or audio_pause_toggle(),
-        on_copy=lambda: controller.copy(),
-        on_show_window=window.present,
-        on_quit=shutdown,
-    )
 
     GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, shutdown)
     GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, shutdown)
