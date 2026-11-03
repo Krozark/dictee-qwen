@@ -108,10 +108,12 @@ class Controller:
         if not text:
             return
         with self._lock:
+            previous_transcript = self.transcript
             self.transcript = join_segment(self.transcript, text)
+            injected_text = self.transcript[len(previous_transcript) :]
         self._backup_writer.append_segment(text)
         self._gui.append_segment(text)
-        self._maybe_inject(text)
+        self._maybe_inject(injected_text)
 
     def _maybe_inject(self, text: str) -> None:
         try:

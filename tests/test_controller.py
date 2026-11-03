@@ -30,6 +30,16 @@ class FakeAsrBackend:
         return self.text
 
 
+class SequentialAsrBackend:
+    def __init__(self, texts):
+        self._texts = list(texts)
+        self.calls = []
+
+    def transcribe(self, audio, sample_rate):
+        self.calls.append((audio, sample_rate))
+        return self._texts.pop(0)
+
+
 class FakeBackupWriter:
     def __init__(self):
         self.started = False
@@ -150,6 +160,62 @@ def test_process_frame_with_completed_segment_updates_transcript_backup_gui_and_
     assert gui.segments == ["bonjour"]
     assert inject_calls == ["bonjour"]
     assert asr_backend.calls == [(segment_audio, 16000)]
+
+
+def test_process_frame_injects_a_separator_before_a_later_segment():
+    segment_audio = np.ones(10, dtype=np.float32)
+    backup_writer = FakeBackupWriter()
+    gui = FakeGui()
+    asr_backend = SequentialAsrBackend(["bonjour", "le monde"])
+    inject_calls = []
+
+    controller = Controller(
+        vad_segmenter=FakeVadSegmenter([segment_audio, segment_audio]),
+        vad_model=FakeVadModel(),
+        asr_backend=asr_backend,
+        backup_writer=backup_writer,
+        gui=gui,
+        get_active_window_id=lambda: "42",
+        get_window_name=lambda window_id: "Mozilla Firefox",
+        inject_text=lambda text: inject_calls.append(text),
+        set_clipboard=lambda text: None,
+        sample_rate=16000,
+    )
+    controller.toggle_record()
+    controller.process_frame(np.zeros(10, dtype=np.float32))
+    controller.process_frame(np.zeros(10, dtype=np.float32))
+
+    assert controller.transcript == "bonjour le monde"
+    assert inject_calls == ["bonjour", " le monde"]
+    assert gui.segments == ["bonjour", "le monde"]
+    assert backup_writer.segments == ["bonjour", "le monde"]
+
+
+def test_process_frame_does_not_inject_leading_space_before_punctuation_segment():
+    segment_audio = np.ones(10, dtype=np.float32)
+    backup_writer = FakeBackupWriter()
+    gui = FakeGui()
+    asr_backend = SequentialAsrBackend(["bonjour", ", le monde"])
+    inject_calls = []
+
+    controller = Controller(
+        vad_segmenter=FakeVadSegmenter([segment_audio, segment_audio]),
+        vad_model=FakeVadModel(),
+        asr_backend=asr_backend,
+        backup_writer=backup_writer,
+        gui=gui,
+        get_active_window_id=lambda: "42",
+        get_window_name=lambda window_id: "Mozilla Firefox",
+        inject_text=lambda text: inject_calls.append(text),
+        set_clipboard=lambda text: None,
+        sample_rate=16000,
+    )
+    controller.toggle_record()
+    controller.process_frame(np.zeros(10, dtype=np.float32))
+    controller.process_frame(np.zeros(10, dtype=np.float32))
+
+    assert controller.transcript == "bonjour, le monde"
+    assert inject_calls == ["bonjour", ", le monde"]
 
 
 def test_process_frame_skips_injection_when_focus_is_own_window():
