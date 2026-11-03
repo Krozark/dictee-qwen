@@ -18,7 +18,7 @@ from dictee.audio_capture import SAMPLE_RATE, AudioCapture
 from dictee.backup_writer import BackupWriter
 from dictee.config import load_config
 from dictee.controller import Controller
-from dictee.gui import DictationWindow
+from dictee.gui import DictationWindow, TrayIcon
 from dictee.hotkeys import HotkeyListener
 from dictee.injector import get_active_window_id, get_window_name, inject_text, set_clipboard
 from dictee.pid_lock import AlreadyRunningError, PidLock
@@ -130,6 +130,15 @@ def main() -> int:
         lock.release()
         Gtk.main_quit()
         return False
+
+    tray_icon = TrayIcon(
+        get_state=lambda: controller.state,
+        on_toggle_record=lambda: controller.toggle_record() or audio_toggle(),
+        on_toggle_pause=lambda: controller.toggle_pause() or audio_pause_toggle(),
+        on_copy=lambda: controller.copy(),
+        on_show_window=window.present,
+        on_quit=shutdown,
+    )
 
     GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, shutdown)
     GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, shutdown)
